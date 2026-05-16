@@ -1,0 +1,1310 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>世界气候类型匹配游戏 · AI导师版（整体可拖动）</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        body {
+            background: #f0f9ff;
+            padding: 20px;
+            color: #1a365d;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 2000px;
+            margin: 0 auto;
+        }
+
+        /* 透明的音频启动按钮 */
+        #audioStarter {
+            position: fixed;
+            width: 100px;
+            height: 40px;
+            top: 10px;
+            left: 10px;
+            opacity: 0.01;
+            z-index: 9999;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        h1 {
+            color: #2c5282;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+
+        /* 计时器 */
+        .timer-container {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 15px 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 2px solid #4299e1;
+            min-width: 220px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .timer-title {
+            font-size: 1em;
+            color: #2c5282;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .timer-display {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2b6cb0;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .timer-time {
+            font-size: 1em;
+            font-weight: bold;
+            text-align: center;
+            padding: 5px;
+            margin: 0 5px;
+            color: #2d3748;
+            min-width: 60px;
+        }
+
+        .timer-label {
+            font-size: 0.9em;
+            color: #4a5568;
+            margin: 0 5px;
+        }
+
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .timer-btn {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+
+        .timer-btn:hover {
+            background: #2b6cb0;
+            transform: translateY(-2px);
+        }
+
+        .timer-btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .timer-btn.start-btn {
+            background: #38a169;
+        }
+
+        .timer-btn.start-btn:hover {
+            background: #2f855a;
+        }
+
+        .timer-btn.reset-btn {
+            background: #e53e3e;
+        }
+
+        .timer-btn.reset-btn:hover {
+            background: #c53030;
+        }
+
+        .instructions {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px auto;
+            max-width: 900px;
+            line-height: 1.5;
+        }
+
+        .game-area {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+
+        /* 左侧口诀区 */
+        .clues-container {
+            flex: 1;
+            min-width: 340px;
+            max-width: 380px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .clue-hint {
+            background: #fff3cd;
+            padding: 12px 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+            font-size: 0.95em;
+            line-height: 1.4;
+            color: #856404;
+            text-align: left;
+        }
+
+        .clue-item {
+            background: #f7fafc;
+            padding: 22px 15px;
+            margin: 18px 0;
+            border-radius: 10px;
+            border-left: 5px solid #4299e1;
+            cursor: move;
+            transition: all 0.3s;
+            font-size: 1.1em;
+            line-height: 1.5;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .clue-item:hover {
+            background: #bee3f8;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 12px rgba(66, 153, 225, 0.2);
+        }
+
+        .clue-item.dragging {
+            opacity: 0.6;
+        }
+
+        .clue-item.matched {
+            opacity: 0.5;
+            text-decoration: line-through;
+            background: #e6fffa;
+        }
+
+        /* 右侧气候图区 */
+        .charts-container {
+            flex: 3;
+            min-width: 1000px;
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .chart-item {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e0;
+            border-radius: 12px;
+            padding: 13px;
+            transition: all 0.3s;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .chart-item.over {
+            border-color: #4299e1;
+            background: #ebf8ff;
+        }
+
+        .chart-item.matched {
+            border-color: #38a169;
+            border-style: solid;
+            background: #f0fff4;
+        }
+
+        .chart-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #2d3748;
+            height: 2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            position: relative;
+            z-index: 2;
+        }
+
+        .chart-image-container {
+            width: 100%;
+            height: 350px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0;
+            overflow: hidden;
+            background-color: #fafafa;
+            border-radius: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .chart-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 2;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 5px;
+        }
+
+        .landscape-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 3;
+        }
+
+        .chart-item.matched .landscape-overlay {
+            opacity: 1;
+        }
+
+        .status {
+            background: #ebf8ff;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin: 30px auto;
+            max-width: 600px;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #2b6cb0;
+            border: 2px solid #bee3f8;
+        }
+
+        .controls {
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        #resetBtn {
+            background: linear-gradient(to right, #4299e1, #2b6cb0);
+            color: white;
+            border: none;
+            padding: 16px 45px;
+            font-size: 1.15em;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(66, 153, 225, 0.3);
+            transition: all 0.3s;
+        }
+
+        #resetBtn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 7px 18px rgba(43, 108, 176, 0.4);
+        }
+
+        /* 祝贺弹窗 */
+        .celebration-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .celebration-modal {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.5s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .celebration-modal::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: linear-gradient(to right, #059669, #D97706, #DC2626, #7C3AED, #2563EB, #0891B2, #0D9488, #1D4ED8, #475569, #065F46, #2D3748);
+        }
+
+        .celebration-title {
+            font-size: 2.5em;
+            color: #2c5282;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, #059669, #2563EB, #DC2626);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .celebration-subtitle {
+            font-size: 1.3em;
+            color: #4a5568;
+            margin-bottom: 30px;
+        }
+
+        .completion-time {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #059669;
+            background: #f0fff4;
+            padding: 10px 20px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-bottom: 20px;
+            border: 2px solid #059669;
+        }
+
+        .complete-clues {
+            text-align: left;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .complete-clue-item {
+            padding: 12px 15px;
+            margin: 8px 0;
+            border-left: 4px solid;
+            font-size: 1.1em;
+            line-height: 1.5;
+            transition: transform 0.3s;
+        }
+
+        .complete-clue-item:hover {
+            transform: translateX(5px);
+            background: #edf2f7;
+        }
+
+        .climate-name {
+            font-weight: bold;
+            font-size: 1.15em;
+            margin-right: 3px;
+        }
+
+        .celebration-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .celebration-btn {
+            background: linear-gradient(to right, #38a169, #2f855a);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            font-size: 1.1em;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(56, 161, 105, 0.3);
+            transition: all 0.3s;
+            flex: 1;
+            max-width: 200px;
+        }
+
+        .celebration-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 7px 18px rgba(47, 133, 90, 0.4);
+        }
+
+        .celebration-btn.close-btn {
+            background: linear-gradient(to right, #4a5568, #2d3748);
+        }
+
+        .celebration-btn.close-btn:hover {
+            background: linear-gradient(to right, #2d3748, #1a202c);
+            box-shadow: 0 5px 15px rgba(74, 85, 104, 0.3);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes confetti {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(1000px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* ========== AI 助手整体可拖动样式 ========== */
+        #aiAssistant {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            /* 整体可拖动，但通过标题栏触发 */
+            cursor: default;
+        }
+
+        /* 整个组件在拖拽时增加光标提示 */
+        #aiAssistant.dragging {
+            cursor: grabbing;
+        }
+
+        #aiToggleBtn {
+            background: #2c5282;
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            color: white;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        #aiToggleBtn:hover {
+            transform: scale(1.05);
+        }
+
+        #aiPanel {
+            display: none;
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            width: 380px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+            border: 1px solid #cbd5e0;
+            overflow: hidden;
+            flex-direction: column;
+            user-select: none;
+        }
+
+        /* 标题栏可拖拽区域 */
+        .ai-header {
+            background: #2c5282;
+            color: white;
+            padding: 12px 16px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: grab;
+            background-color: #2c5282;
+        }
+
+        .ai-header:active {
+            cursor: grabbing;
+        }
+
+        .ai-header span {
+            cursor: grab;
+        }
+
+        .ai-header span:active {
+            cursor: grabbing;
+        }
+
+        .drag-hint {
+            font-size: 11px;
+            margin-left: 8px;
+            opacity: 0.8;
+        }
+
+        #aiMessages {
+            height: 320px;
+            overflow-y: auto;
+            padding: 12px;
+            background: #f7fafc;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ai-message {
+            max-width: 85%;
+            padding: 8px 12px;
+            border-radius: 18px;
+            margin-bottom: 4px;
+            word-break: break-word;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .ai-user {
+            align-self: flex-end;
+            background-color: #2c5282;
+            color: white;
+        }
+
+        .ai-bot {
+            align-self: flex-start;
+            background-color: #e2e8f0;
+            color: #1a202c;
+        }
+
+        .ai-footer {
+            padding: 12px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            background: white;
+        }
+
+        #aiInput {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 30px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        #aiSendBtn {
+            margin-left: 8px;
+            background: #2c5282;
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        @media (max-width: 768px) {
+            #aiPanel {
+                width: 280px;
+                right: 0;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+
+            .chart-image-container {
+                height: 280px;
+            }
+
+            .timer-container {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin: 0 auto 20px;
+                max-width: 300px;
+            }
+
+            .clue-item {
+                padding: 18px 15px;
+                margin: 15px 0;
+                min-height: 60px;
+            }
+
+            .celebration-modal {
+                padding: 30px 20px;
+            }
+
+            .celebration-title {
+                font-size: 1.8em;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .game-area {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .clues-container,
+            .charts-container {
+                min-width: 100%;
+                max-width: 100%;
+            }
+
+            .charts-grid {
+                grid-template-columns: repeat(2, minmax(280px, 1fr));
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 透明的音频启动按钮 -->
+    <button id="audioStarter">音频启动</button>
+
+    <div class="container">
+        <div class="header">
+            <h1>🌍 世界气候类型匹配游戏 · AI导师版</h1>
+            <div class="timer-container">
+                <div class="timer-title">⏱️ 游戏用时</div>
+                <div class="timer-display">
+                    <span id="minutesDisplay" class="timer-time">00</span>
+                    <span class="timer-label">分</span>
+                    <span id="secondsDisplay" class="timer-time">00</span>
+                    <span class="timer-label">秒</span>
+                </div>
+                <div class="timer-controls">
+                    <button id="startTimerBtn" class="timer-btn start-btn">开始</button>
+                    <button id="resetTimerBtn" class="timer-btn reset-btn" disabled>重置</button>
+                </div>
+            </div>
+            <div class="instructions">
+                <strong>游戏说明：</strong>将左侧的<strong>气候特征口诀</strong>拖拽到右侧对应的<strong>标准气候图</strong>上。<br>
+                <strong>📜特别提示：</strong>右侧气候图每次游戏都会<strong>随机打乱顺序</strong>，增加挑战性！<br>
+                <strong>✨ AI导师：</strong>点击右下角启动导师；配对错误时自动弹出AI解释；也可自由提问。
+            </div>
+        </div>
+
+        <div class="game-area">
+            <div class="clues-container">
+                <h2>📜 气候特征口诀</h2>
+                <div class="clue-hint">
+                    <strong>提示：</strong>口诀中的"______"代表气候类型名称，后面文字代表气候特征。拖动口诀到对应的气候图上完成匹配。
+                </div>
+                <div id="cluesList"></div>
+            </div>
+            <div class="charts-container">
+                <h2>📊 标准气候图（随机排序）</h2>
+                <div class="charts-grid" id="chartsGrid"></div>
+            </div>
+        </div>
+
+        <div class="status" id="status">匹配进度: <span id="matchedCount">0</span> / <span id="totalCount">11</span></div>
+        <div class="controls"><button id="resetBtn">重新开始游戏</button></div>
+    </div>
+
+    <!-- 祝贺弹窗 -->
+    <div class="celebration-overlay" id="celebrationOverlay">
+        <div class="celebration-modal">
+            <h2 class="celebration-title">🎉 恭喜！匹配成功！</h2>
+            <p class="celebration-subtitle">您已掌握世界主要气候类型的特征</p>
+            <div class="completion-time" id="completionTime">
+                完成时间: <span id="finalTime">00分00秒</span>
+            </div>
+            <div class="complete-clues" id="completeClues"></div>
+            <div class="celebration-buttons">
+                <button class="celebration-btn" id="playAgainBtn">再玩一次</button>
+                <button class="celebration-btn close-btn" id="closeModalBtn">关闭窗口</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI 助手整体（可拖动） -->
+    <div id="aiAssistant">
+        <button id="aiToggleBtn">🤖</button>
+        <div id="aiPanel">
+            <div class="ai-header" id="aiDragHandle">
+                <span>🌍 气候 AI 导师 <span class="drag-hint">(拖动此处移动)</span></span>
+                <button id="aiCloseBtn" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">&times;</button>
+            </div>
+            <div id="aiMessages">
+                <div class="ai-message ai-bot">你好！我是气候 AI 导师。你可以问我任何气候类型的问题，比如“热带雨林气候有什么特点？”<br><span style="font-size:10px;">🤖 AI生成</span></div>
+            </div>
+            <div class="ai-footer">
+                <input type="text" id="aiInput" placeholder="输入问题...">
+                <button id="aiSendBtn">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 隐藏的音频元素 -->
+    <audio id="backgroundMusic" loop preload="auto"></audio>
+    <audio id="celebrationSound" preload="auto"></audio>
+
+    <script>
+        // ===================== 请在这里填写你的 DeepSeek API Key =====================
+        const DEEPSEEK_API_KEY = 'sk-600e078d6f2147e384a15f217d654f2c';   // 替换成你自己的 Key
+
+        // ===================== 音乐配置 =====================
+        const musicConfig = {
+            backgroundMusic: { file: "background.mp3", type: "audio/mpeg", volume: 0.4, loop: true },
+            celebrationSound: { file: "celebration.mp3", type: "audio/mpeg", volume: 0.7 }
+        };
+        const AUDIO_FOLDER = "audio/";
+
+        // ===================== 核心数据 =====================
+        const completeClues = [
+            { name: "热带雨林气候", clue: "热带雨林雨不休，柱状满格如瀑流!", shortName: "热带雨林", color: "#059669" },
+            { name: "热带草原气候", clue: "热带草原分干湿，湿季长草干季枯!", shortName: "热带草原", color: "#D97706" },
+            { name: "热带季风气候", clue: "热带季风分旱雨，柱状峰值冲上天!", shortName: "热带季风", color: "#DC2626" },
+            { name: "热带沙漠气候", clue: "热带沙漠全年旱，降水稀少生存难!", shortName: "热带沙漠", color: "#7C3AED" },
+            { name: "亚热带季风气候", clue: "亚热季风雨热同，夏雨超百冬稍冷!", shortName: "亚热季风", color: "#2563EB" },
+            { name: "地中海气候", clue: "地中海式气候怪，冬雨夏干反着来!", shortName: "地中海式", color: "#0891B2" },
+            { name: "温带海洋性气候", clue: "温带海洋四季柔，降水均匀柱平流!", shortName: "温带海洋", color: "#0D9488" },
+            { name: "温带季风气候", clue: "温带季风冬寒强，夏雨集中冬雪扬!", shortName: "温带季风", color: "#1D4ED8" },
+            { name: "温带大陆性气候", clue: "温带大陆温差显，夏短炎热冬长寒!", shortName: "温带大陆", color: "#475569" },
+            { name: "高原山地气候", clue: "高原山地垂直变，气温随高度递减!", shortName: "高原山地", color: "#065F46" },
+            { name: "极地气候", clue: "极地气候风雪狂，冰封千里白茫茫!", shortName: "极地气候", color: "#2D3748" }
+        ];
+
+        const climateData = [
+            { name: "热带雨林气候", clue: "_____雨不休，柱状满格如瀑流!", imageFile: "热带雨林气候-伊基托斯.jpg", landscapeFile: "热带雨林景观.jpg", color: "#059669" },
+            { name: "热带草原气候", clue: "_____分干湿，湿季长草干季枯!", imageFile: "热带草原气候-巴马科.jpg", landscapeFile: "热带草原景观.jpg", color: "#D97706" },
+            { name: "热带季风气候", clue: "_____分旱雨，柱状峰值冲上天!", imageFile: "热带季风气候-孟买.jpg", landscapeFile: "热带季风景观.jpg", color: "#DC2626" },
+            { name: "热带沙漠气候", clue: "_____全年旱，降水稀少生存难!", imageFile: "热带沙漠气候-阿斯旺.jpg", landscapeFile: "热带沙漠景观.jpg", color: "#7C3AED" },
+            { name: "亚热带季风气候", clue: "_____雨热同，夏雨超百冬稍冷!", imageFile: "亚热带季风气候-上海.jpg", landscapeFile: "亚热带季风景观.jpg", color: "#2563EB" },
+            { name: "地中海气候", clue: "_____气候怪，冬雨夏干反着来!", imageFile: "地中海气候-罗马.jpg", landscapeFile: "地中海景观.jpg", color: "#0891B2" },
+            { name: "温带海洋性气候", clue: "_____四季柔，降水均匀柱平流!", imageFile: "温带海洋性气候-伦敦.jpg", landscapeFile: "温带海洋性景观.jpg", color: "#0D9488" },
+            { name: "温带季风气候", clue: "_____冬寒强，夏雨集中冬雪扬!", imageFile: "温带季风气候-北京.jpg", landscapeFile: "温带季风景观.jpg", color: "#1D4ED8" },
+            { name: "温带大陆性气候", clue: "_____温差显，夏短炎热冬长寒!", imageFile: "温带大陆性气候-莫斯科.jpg", landscapeFile: "温带大陆性景观.jpg", color: "#475569" },
+            { name: "高原山地气候", clue: "_____垂直变，气温随高度递减!", imageFile: "高原山地气候-拉萨.jpg", landscapeFile: "高原山地景观.jpg", color: "#065F46" },
+            { name: "极地气候", clue: "_____风雪狂，冰封千里白茫茫!", imageFile: "极地气候-东方站.jpg", landscapeFile: "极地景观.jpg", color: "#2D3748" }
+        ];
+
+        const IMAGE_FOLDER = "climate_images/";
+        const LANDSCAPE_FOLDER = "landscape_images/";
+
+        let draggedItem = null;
+        let matchedPairs = 0;
+        let currentClimateOrder = [];
+        let timerInterval = null;
+        let totalSeconds = 0;
+        let isTimerRunning = false;
+
+        // ---------- 音频系统 ----------
+        function initAudioSystem() {
+            const bgMusic = document.getElementById('backgroundMusic');
+            const celebrationAudio = document.getElementById('celebrationSound');
+            const bgSource = document.createElement('source');
+            bgSource.src = AUDIO_FOLDER + musicConfig.backgroundMusic.file;
+            bgSource.type = musicConfig.backgroundMusic.type;
+            bgMusic.appendChild(bgSource);
+            bgMusic.volume = musicConfig.backgroundMusic.volume;
+            bgMusic.loop = musicConfig.backgroundMusic.loop;
+            const ceSource = document.createElement('source');
+            ceSource.src = AUDIO_FOLDER + musicConfig.celebrationSound.file;
+            ceSource.type = musicConfig.celebrationSound.type;
+            celebrationAudio.appendChild(ceSource);
+            celebrationAudio.volume = musicConfig.celebrationSound.volume;
+        }
+
+        function playBackgroundMusic() {
+            const bgMusic = document.getElementById('backgroundMusic');
+            bgMusic.play().catch(e => console.log("背景音乐自动播放被阻止:", e));
+        }
+
+        function stopBackgroundMusic() {
+            const bgMusic = document.getElementById('backgroundMusic');
+            bgMusic.pause();
+            bgMusic.currentTime = 0;
+        }
+
+        function playCelebrationSound() {
+            const celebrationAudio = document.getElementById('celebrationSound');
+            celebrationAudio.currentTime = 0;
+            celebrationAudio.play().catch(e => console.log("庆祝音效播放失败:", e));
+        }
+
+        // ---------- 计时器 ----------
+        function startTimer() {
+            if (isTimerRunning) return;
+            isTimerRunning = true;
+            totalSeconds = 0;
+            if (timerInterval) clearInterval(timerInterval);
+            document.getElementById('startTimerBtn').disabled = true;
+            document.getElementById('resetTimerBtn').disabled = false;
+            playBackgroundMusic();
+            timerInterval = setInterval(() => {
+                totalSeconds++;
+                updateTimerDisplay();
+            }, 1000);
+            updateTimerDisplay();
+        }
+
+        function stopTimer() {
+            isTimerRunning = false;
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function resetTimer() {
+            stopTimer();
+            totalSeconds = 0;
+            document.getElementById('startTimerBtn').disabled = false;
+            document.getElementById('resetTimerBtn').disabled = true;
+            updateTimerDisplay();
+            stopBackgroundMusic();
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            document.getElementById('minutesDisplay').textContent = minutes.toString().padStart(2, '0');
+            document.getElementById('secondsDisplay').textContent = seconds.toString().padStart(2, '0');
+        }
+
+        function formatTime(sec) {
+            let m = Math.floor(sec / 60);
+            let s = sec % 60;
+            return `${m.toString().padStart(2, '0')}分${s.toString().padStart(2, '0')}秒`;
+        }
+
+        // ---------- AI 调用核心 ----------
+        async function callDeepSeek(userMessage, systemPrompt = null) {
+            const defaultSystem = `你是一位地理老师，擅长讲解世界气候类型（热带雨林、热带草原、热带季风、热带沙漠、亚热带季风、地中海、温带海洋性、温带季风、温带大陆性、高原山地、极地气候）。你的回答要生动有趣，适合中学生理解，可以结合气候口诀和气候特征图适当举例或提示。记住不要直接给出考试答案，而是引导学生思考。`;
+            const messages = [{
+                    role: 'system',
+                    content: systemPrompt || defaultSystem
+                },
+                {
+                    role: 'user',
+                    content: userMessage
+                }
+            ];
+            const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+                },
+                body: JSON.stringify({
+                    model: 'deepseek-chat',
+                    messages,
+                    temperature: 0.7,
+                    max_tokens: 500
+                })
+            });
+            if (!response.ok) throw new Error(`API错误 ${response.status}`);
+            const data = await response.json();
+            return data.choices[0].message.content;
+        }
+
+        // ---------- AI 面板逻辑（独立状态）----------
+        let isPanelOpen = false;
+
+        function openPanel() {
+            const panel = document.getElementById('aiPanel');
+            panel.style.display = 'flex';
+            isPanelOpen = true;
+        }
+
+        function closePanel() {
+            const panel = document.getElementById('aiPanel');
+            panel.style.display = 'none';
+            isPanelOpen = false;
+        }
+
+        function togglePanel() {
+            if (isPanelOpen) {
+                closePanel();
+            } else {
+                openPanel();
+            }
+        }
+
+        function addAIMessage(text, isUser = false) {
+            const container = document.getElementById('aiMessages');
+            const div = document.createElement('div');
+            div.className = `ai-message ${isUser ? 'ai-user' : 'ai-bot'}`;
+            div.innerHTML = text + (isUser ? '' : '<br><span style="font-size:10px;">🤖 AI生成</span>');
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function sendToAIAndReply(userMessage, autoOpen = true) {
+            if (autoOpen && !isPanelOpen) openPanel();
+            addAIMessage(userMessage, true);
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'ai-message ai-bot';
+            loadingDiv.innerText = '正在思考...';
+            document.getElementById('aiMessages').appendChild(loadingDiv);
+            try {
+                const reply = await callDeepSeek(userMessage);
+                loadingDiv.remove();
+                addAIMessage(reply, false);
+            } catch (e) {
+                loadingDiv.remove();
+                addAIMessage('抱歉，AI暂时无法回答，请稍后再试。', false);
+                console.error(e);
+            }
+        }
+
+        // 错误时自动弹出AI解释
+        async function aiExplainMistake(wrongClimate, correctClimate) {
+            try {
+                const prompt = `学生错误地将“${wrongClimate}”的口诀拖到了“${correctClimate}”的气候图上。请解释为什么不对，并简要对比这两个气候类型的主要区别（50字以内），语气鼓励。`;
+                const reply = await callDeepSeek(prompt, "你是一位耐心的地理老师，用简短的、鼓励的话帮助学生理解气候类型区别。");
+                if (!isPanelOpen) openPanel();
+                addAIMessage(`🔍 小提示：${reply}`, false);
+            } catch (e) {
+                console.warn("AI解释失败", e);
+            }
+        }
+
+        // ---------- 整体拖动功能（使整个 #aiAssistant 可拖动，通过标题栏触发）----------
+        let isDragging = false;
+        let dragStartX = 0,
+            dragStartY = 0;
+        let initialLeft = 0,
+            initialTop = 0;
+
+        function startDrag(e) {
+            // 确保只有点击标题栏或标题栏内的元素时开始拖拽，点击关闭按钮、输入框、发送按钮等不触发
+            const target = e.target;
+            const isDragHandle = target.closest('#aiDragHandle') && !target.closest('#aiCloseBtn');
+            if (!isDragHandle) return;
+
+            e.preventDefault();
+            isDragging = true;
+            const assistant = document.getElementById('aiAssistant');
+            // 获取当前元素的 left, top (如果未设置 left 则使用 getBoundingClientRect)
+            const rect = assistant.getBoundingClientRect();
+            initialLeft = rect.left;
+            initialTop = rect.top;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+
+            assistant.style.left = initialLeft + 'px';
+            assistant.style.top = initialTop + 'px';
+            assistant.style.right = 'auto';
+            assistant.style.bottom = 'auto';
+            assistant.classList.add('dragging');
+        }
+
+        function onDragMove(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            const assistant = document.getElementById('aiAssistant');
+            let newLeft = initialLeft + (e.clientX - dragStartX);
+            let newTop = initialTop + (e.clientY - dragStartY);
+            // 边界限制
+            const maxX = window.innerWidth - assistant.offsetWidth;
+            const maxY = window.innerHeight - assistant.offsetHeight;
+            newLeft = Math.min(Math.max(0, newLeft), maxX);
+            newTop = Math.min(Math.max(0, newTop), maxY);
+            assistant.style.left = newLeft + 'px';
+            assistant.style.top = newTop + 'px';
+        }
+
+        function stopDrag() {
+            if (isDragging) {
+                isDragging = false;
+                const assistant = document.getElementById('aiAssistant');
+                assistant.classList.remove('dragging');
+            }
+        }
+
+        // 绑定全局拖动事件
+        function initDragging() {
+            const dragHandle = document.getElementById('aiDragHandle');
+            dragHandle.addEventListener('mousedown', startDrag);
+            window.addEventListener('mousemove', onDragMove);
+            window.addEventListener('mouseup', stopDrag);
+        }
+
+        // ---------- 游戏逻辑 ----------
+        function shuffleArray(arr) {
+            let a = [...arr];
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function updateStatus() {
+            document.getElementById('matchedCount').textContent = matchedPairs;
+            document.getElementById('totalCount').textContent = climateData.length;
+        }
+
+        function handleDragStart(e) {
+            draggedItem = this;
+            this.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', this.dataset.climate);
+        }
+
+        function handleDragEnd() {
+            this.classList.remove('dragging');
+            draggedItem = null;
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            this.classList.remove('over');
+            const draggedClimate = draggedItem.dataset.climate;
+            const targetClimate = this.dataset.climate;
+            if (draggedClimate === targetClimate) {
+                const titleEl = this.querySelector('.chart-title');
+                titleEl.textContent = targetClimate;
+                this.classList.add('matched');
+                draggedItem.classList.add('matched');
+                draggedItem.style.pointerEvents = 'none';
+                matchedPairs++;
+                updateStatus();
+                if (matchedPairs === climateData.length) {
+                    setTimeout(() => showCelebration(), 500);
+                }
+            } else {
+                // 错误配对：红色闪烁 + AI解释（自动打开窗口）
+                this.style.borderColor = '#fc8181';
+                this.style.backgroundColor = '#fff5f5';
+                setTimeout(() => {
+                    this.style.borderColor = '';
+                    this.style.backgroundColor = '';
+                }, 600);
+                aiExplainMistake(draggedClimate, targetClimate);
+            }
+        }
+
+        function initGame() {
+            const cluesList = document.getElementById('cluesList');
+            const chartsGrid = document.getElementById('chartsGrid');
+            cluesList.innerHTML = '';
+            chartsGrid.innerHTML = '';
+            matchedPairs = 0;
+            updateStatus();
+            // 左侧口诀
+            climateData.forEach(climate => {
+                const clueEl = document.createElement('div');
+                clueEl.className = 'clue-item';
+                clueEl.id = `clue-${climate.name}`;
+                clueEl.textContent = climate.clue;
+                clueEl.draggable = true;
+                clueEl.dataset.climate = climate.name;
+                clueEl.style.borderLeftColor = climate.color;
+                clueEl.addEventListener('dragstart', handleDragStart);
+                clueEl.addEventListener('dragend', handleDragEnd);
+                cluesList.appendChild(clueEl);
+            });
+            // 右侧随机顺序
+            currentClimateOrder = shuffleArray(climateData);
+            currentClimateOrder.forEach(climate => {
+                const chartEl = document.createElement('div');
+                chartEl.className = 'chart-item';
+                chartEl.id = `chart-${climate.name}`;
+                chartEl.dataset.climate = climate.name;
+                const titleEl = document.createElement('div');
+                titleEl.className = 'chart-title';
+                titleEl.textContent = '？';
+                titleEl.style.color = climate.color;
+                const imgContainer = document.createElement('div');
+                imgContainer.className = 'chart-image-container';
+                const imgEl = document.createElement('img');
+                imgEl.className = 'chart-image';
+                imgEl.src = IMAGE_FOLDER + climate.imageFile;
+                imgEl.alt = climate.name + "气候图";
+                imgEl.onerror = function() {
+                    this.style.display = 'none';
+                    const errDiv = document.createElement('div');
+                    errDiv.innerHTML = `<div style="color:#e53e3e;">图片未找到</div><div style="font-size:0.8rem;">${climate.imageFile}</div>`;
+                    imgContainer.appendChild(errDiv);
+                };
+                const landscapeImg = document.createElement('img');
+                landscapeImg.className = 'landscape-overlay';
+                landscapeImg.src = LANDSCAPE_FOLDER + climate.landscapeFile;
+                landscapeImg.alt = climate.name + "景观图";
+                imgContainer.appendChild(imgEl);
+                imgContainer.appendChild(landscapeImg);
+                chartEl.addEventListener('dragover', e => e.preventDefault());
+                chartEl.addEventListener('dragenter', () => chartEl.classList.add('over'));
+                chartEl.addEventListener('dragleave', () => chartEl.classList.remove('over'));
+                chartEl.addEventListener('drop', handleDrop);
+                chartEl.appendChild(titleEl);
+                chartEl.appendChild(imgContainer);
+                chartsGrid.appendChild(chartEl);
+            });
+            resetTimer();
+        }
+
+        async function showCelebration() {
+            playCelebrationSound();
+            stopTimer();
+            stopBackgroundMusic();
+            document.getElementById('finalTime').textContent = formatTime(totalSeconds);
+            const completeContainer = document.getElementById('completeClues');
+            completeContainer.innerHTML = '';
+            completeClues.forEach(item => {
+                const climateName = item.shortName || item.name.substring(0, 4);
+                const restOfClue = item.clue.substring(climateName.length);
+                const clueEl = document.createElement('div');
+                clueEl.className = 'complete-clue-item';
+                clueEl.style.borderLeftColor = item.color;
+                clueEl.style.backgroundColor = `${item.color}10`;
+                clueEl.innerHTML = `<span class="climate-name" style="color: ${item.color}">${climateName}</span><span>${restOfClue}</span>`;
+                completeContainer.appendChild(clueEl);
+            });
+            // AI 总结
+            try {
+                const summary = await callDeepSeek(`学生完成了世界气候类型配对游戏，用时 ${formatTime(totalSeconds)}。请写一段表扬和鼓励的话，并给出2条学习气候类型的建议。字数100字以内，语气热情。`);
+                const aiDiv = document.createElement('div');
+                aiDiv.style.marginTop = '20px';
+                aiDiv.style.padding = '12px';
+                aiDiv.style.backgroundColor = '#e6f7ff';
+                aiDiv.style.borderRadius = '12px';
+                aiDiv.style.borderLeft = '4px solid #2c5282';
+                aiDiv.innerHTML = `<strong>🤖 AI 导师说：</strong><br>${summary}<br><span style="font-size:10px;">🤖 AI生成</span>`;
+                completeContainer.appendChild(aiDiv);
+            } catch (e) {
+                console.warn("AI总结失败", e);
+            }
+            document.getElementById('celebrationOverlay').style.display = 'flex';
+            createConfetti();
+        }
+
+        function createConfetti() {
+            const colors = ['#059669', '#D97706', '#DC2626', '#7C3AED', '#2563EB', '#0891B2'];
+            for (let i = 0; i < 80; i++) {
+                const c = document.createElement('div');
+                c.style.position = 'fixed';
+                c.style.width = '10px';
+                c.style.height = '10px';
+                c.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                c.style.borderRadius = '50%';
+                c.style.left = Math.random() * 100 + 'vw';
+                c.style.top = '-20px';
+                c.style.zIndex = '1001';
+                c.style.animation = `confetti ${Math.random() * 3 + 2}s linear forwards`;
+                document.body.appendChild(c);
+                setTimeout(() => c.remove(), 5000);
+            }
+        }
+
+        // ---------- UI 初始化 ----------
+        function initUI() {
+            const toggleBtn = document.getElementById('aiToggleBtn');
+            const closeBtn = document.getElementById('aiCloseBtn');
+            const sendBtn = document.getElementById('aiSendBtn');
+            const input = document.getElementById('aiInput');
+
+            toggleBtn.onclick = (e) => {
+                e.stopPropagation();
+                togglePanel();
+            };
+            closeBtn.onclick = (e) => {
+                e.stopPropagation();
+                closePanel();
+            };
+            sendBtn.onclick = (e) => {
+                e.stopPropagation();
+                const msg = input.value.trim();
+                if (msg) {
+                    sendToAIAndReply(msg);
+                    input.value = '';
+                }
+            };
+            input.onkeypress = (e) => {
+                if (e.key === 'Enter') sendBtn.click();
+            };
+
+            closePanel(); // 初始关闭
+            initDragging();
+        }
+
+        // ---------- 事件绑定 ----------
+        document.getElementById('resetBtn').addEventListener('click', initGame);
+        document.getElementById('playAgainBtn').addEventListener('click', () => {
+            document.getElementById('celebrationOverlay').style.display = 'none';
+            initGame();
+        });
+        document.getElementById('closeModalBtn').addEventListener('click', () => {
+            document.getElementById('celebrationOverlay').style.display = 'none';
+        });
+        document.getElementById('audioStarter').addEventListener('click', function() {
+            playBackgroundMusic();
+            this.style.display = 'none';
+        });
+        document.getElementById('startTimerBtn').addEventListener('click', startTimer);
+        document.getElementById('resetTimerBtn').addEventListener('click', resetTimer);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initAudioSystem();
+            initGame();
+            initUI();
+        });
+    </script>
+</body>
+</html>
+        window.addEventListener('DOMContentLoaded', () => {
+            initAudioSystem();
+            initGame();
+            initUI();
+        });
+    </script>
+</body>
+</html>/html>
