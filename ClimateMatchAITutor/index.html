@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>世界气候类型匹配游戏 · 平板触摸版</title>
+    <title>世界气候类型匹配游戏 · 拖拽痕迹强化版</title>
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            user-select: none; /* 避免拖拽时选中文字，提升平板体验 */
+            user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -26,7 +26,6 @@
             margin: 0 auto;
         }
 
-        /* 透明音频启动按钮 */
         #audioStarter {
             position: fixed;
             width: 100px;
@@ -85,7 +84,6 @@
             line-height: 1.4;
         }
 
-        /* 核心水平布局 */
         .game-area {
             display: flex;
             flex-wrap: nowrap;
@@ -94,7 +92,6 @@
             width: 100%;
         }
 
-        /* 左侧口诀区 */
         .clues-container {
             flex: 2;
             min-width: 240px;
@@ -107,46 +104,46 @@
         }
 
         .clues-container h2 { font-size: clamp(1rem, 4vw, 1.4rem); margin-bottom: 0.8rem; }
-        .clue-hint { background: #fff3cd; padding: 0.7rem; border-radius: 8px; border-left: 4px solid #ffc107; font-size: clamp(0.7rem, 2.5vw, 0.85rem); margin-bottom: 1rem; }
+        .clue-hint { background: #fff3cd; padding: 0.7rem; border-radius: 8px; border-left: 4px solid #ffc107; font-size: clamp(0.75rem, 2.8vw, 0.9rem); margin-bottom: 1rem; }
 
+        /* 🔥 左侧口诀：显著增大字体 */
         .clue-item {
             background: #f7fafc;
-            padding: 0.8rem 0.5rem;
-            margin: 0.6rem 0;
-            border-radius: 10px;
-            border-left: 5px solid;
+            padding: 1rem 0.8rem;          /* 增加内边距 */
+            margin: 0.8rem 0;
+            border-radius: 14px;
+            border-left: 6px solid;
             cursor: grab;
             transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-            font-size: clamp(0.75rem, 2.8vw, 0.9rem);
-            line-height: 1.3;
+            font-size: clamp(1rem, 3.5vw, 1.25rem);  /* 字体明显增大 */
+            font-weight: 500;
+            line-height: 1.4;
             text-align: center;
             word-break: break-word;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 65px;
-            touch-action: none;  /* 完全阻止页面滚动拖拽冲突，平板核心优化 */
+            min-height: 75px;
+            touch-action: none;
             will-change: transform;
             position: relative;
             z-index: 1;
         }
 
-        /* 🔥 拖拽时的抓取效果强化 (平板/鼠标均生效) */
-        .clue-item.clue-dragging {
-            transform: scale(1.04) translateY(-3px);
-            background: #c3dafe !important;
-            box-shadow: 0 18px 28px -8px rgba(0, 0, 0, 0.3), 0 0 0 2px #4299e1 inset;
+        /* 拖拽时的原卡样式 (透明且缩小一点，凸显克隆体) */
+        .clue-item.clue-dragging-original {
+            opacity: 0.35 !important;
+            transform: scale(0.96);
+            filter: blur(1px);
             cursor: grabbing;
-            opacity: 0.95;
-            transition: transform 0.08s linear, box-shadow 0.1s;
-            z-index: 1000;
+            transition: all 0.08s linear;
         }
 
         .clue-item:active { cursor: grabbing; }
-        .clue-item:hover { background: #bee3f8; transform: translateY(-2px); }
+        .clue-item:hover { background: #bee3f8; transform: translateY(-3px); }
         
         .clue-item.matched {
-            opacity: 0.5;
+            opacity: 0.6;
             text-decoration: line-through;
             background: #e6fffa !important;
             cursor: default;
@@ -155,10 +152,30 @@
             transform: none;
             box-shadow: none;
         }
-        .clue-item.matched.clue-dragging { /* 已配对禁止拖拽，任何拖拽类无效 */
-            transform: none;
-            background: #e6fffa;
+
+        /* 拖拽克隆体样式 (浮动跟随，强烈视觉痕迹) */
+        .drag-clone {
+            position: fixed;
+            z-index: 10000;
+            background: #c3dafe;
+            border-left: 6px solid;
+            border-radius: 14px;
+            padding: 1rem 0.8rem;
+            font-size: clamp(1rem, 3.5vw, 1.25rem);
+            font-weight: 500;
+            text-align: center;
+            box-shadow: 0 20px 30px -12px rgba(0,0,0,0.4), 0 0 0 3px #ffffffaa inset;
+            backdrop-filter: blur(2px);
+            transform: rotate(2deg) scale(1.05);
+            transition: none;
             pointer-events: none;
+            white-space: normal;
+            word-break: break-word;
+            width: auto;
+            max-width: 280px;
+            will-change: left, top;
+            opacity: 0.92;
+            color: #1a202c;
         }
 
         /* 右侧气候图区 */
@@ -188,7 +205,7 @@
             flex-direction: column;
             align-items: center;
             position: relative;
-            touch-action: pan-y pinch-zoom; /* 不影响拖拽目标检测 */
+            touch-action: pan-y pinch-zoom;
         }
 
         .chart-item.over {
@@ -311,7 +328,8 @@
             .clues-container { flex: 2.5; padding: 0.8rem; min-width: 200px; }
             .charts-container { flex: 4; padding: 0.8rem; min-width: 320px; }
             .charts-grid { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 0.7rem; }
-            .clue-item { padding: 0.6rem 0.4rem; min-height: 55px; font-size: 0.75rem; }
+            .clue-item { padding: 0.9rem 0.6rem; min-height: 70px; font-size: clamp(0.95rem, 3vw, 1.15rem); }
+            .drag-clone { font-size: clamp(0.95rem, 3vw, 1.15rem); padding: 0.9rem 0.6rem; }
             .timer-container { position: relative; margin: 0 auto 15px; top: auto; right: auto; width: fit-content; }
             .header { display: flex; flex-direction: column; align-items: center; }
         }
@@ -345,16 +363,17 @@
                 </div>
             </div>
             <div class="instructions">
-                <strong>✨ 游戏说明：</strong>将左侧气候口诀拖到右侧正确的气候图（随机排序）。<br>
-                <strong>🤖 AI导师：</strong>配对错误AI自动弹出解释，右下角可自由提问。
+                <strong>✨ 强力拖拽痕迹 + 大字体口诀：</strong> 手指/鼠标按住左侧卡片 → 卡片半透明，同时出现<strong style="background:#ffecb3;">彩色克隆体</strong>跟随移动，松开即配对！边缘自动滚动，反馈极其明显。
+                <br>游戏说明：将左侧口诀拖到右侧正确气候图（随机排序）。AI会在错误时自动解释。
             </div>
         </div>
 
         <div class="game-area">
             <div class="clues-container">
-                <h2>📜 气候特征口诀</h2>
+                <h2>📜 气候特征口诀（字体已加大）</h2>
                 <div class="clue-hint">
-                    <strong>🚀提示：</strong>口诀中的"______"代表气候类型名称，后面文字代表气候特征。拖动口诀到对应的气候图上完成匹配。<br>
+                    💡 <strong>拖拽痕迹增强：</strong> 拖动口诀时，原卡片变淡 + 半透明跟随卡片，松手后配对。<br>
+                    🚀 靠近屏幕边缘页面自动轻柔滚动。
                 </div>
                 <div id="cluesList"></div>
             </div>
@@ -391,7 +410,7 @@
                 <button id="aiCloseBtn" style="background:none; border:none; color:white; font-size:22px; cursor:pointer;">&times;</button>
             </div>
             <div id="aiMessages">
-                <div class="ai-message ai-bot">你好！我是气候 AI 导师。现在拖拽口诀卡片会有“浮起放大”的抓取效果，配对体验更直观！有疑问尽管问我～<br><span style="font-size:9px;">🤖 AI生成</span></div>
+                <div class="ai-message ai-bot">你好！现在拖拽口诀会有醒目的半透明克隆体跟随，配对更直观。有疑问尽管问我～<br><span style="font-size:9px;">🤖 AI生成</span></div>
             </div>
             <div class="ai-footer">
                 <input type="text" id="aiInput" placeholder="输入问题...">
@@ -442,7 +461,6 @@
             { name: "极地气候", clue: "_____风雪狂，冰封千里白茫茫!", imageFile: "极地气候-东方站.jpg", landscapeFile: "极地景观.jpg", color: "#2D3748" }
         ];
 
-        let draggedItem = null;          // 当前拖拽的口诀DOM
         let matchedPairs = 0;
         let currentClimateOrder = [];
         let timerInterval = null;
@@ -452,28 +470,27 @@
         let isScrollingActive = false;
         let currentDragClientY = 0;
         
-        // 全局拖拽状态 (指针统一)
+        // 拖拽状态
         let isDragging = false;
         let activeClue = null;
         let currentTargetChart = null;
+        let dragClone = null;          // 浮动克隆元素
         
-        // 自动滚动边缘阈值 & 速度参数
+        // 自动滚动边缘阈值
         const EDGE_THRESHOLD = 85;
         const BASE_SPEED = 2.2;
         const MAX_SPEED = 4.8;
         
-        // ---------- 平滑自动滚动 (优化版) ----------
+        // ---------- 平滑自动滚动 ----------
         function calculateScrollSpeed(clientY) {
             if (!clientY) return 0;
             const viewportHeight = window.innerHeight;
             if (clientY < EDGE_THRESHOLD) {
                 let distance = EDGE_THRESHOLD - clientY;
-                let speed = -Math.min(MAX_SPEED, BASE_SPEED + distance / 22);
-                return speed;
+                return -Math.min(MAX_SPEED, BASE_SPEED + distance / 22);
             } else if (clientY > viewportHeight - EDGE_THRESHOLD) {
                 let distance = clientY - (viewportHeight - EDGE_THRESHOLD);
-                let speed = Math.min(MAX_SPEED, BASE_SPEED + distance / 22);
-                return speed;
+                return Math.min(MAX_SPEED, BASE_SPEED + distance / 22);
             }
             return 0;
         }
@@ -482,81 +499,100 @@
             if (!isDragging) return;
             if (scrollAnimationId) cancelAnimationFrame(scrollAnimationId);
             isScrollingActive = true;
-            
             function step() {
-                if (!isDragging) {
-                    cancelScroll();
-                    return;
-                }
+                if (!isDragging) { cancelScroll(); return; }
                 let speed = calculateScrollSpeed(currentDragClientY);
                 if (speed !== 0) {
                     window.scrollBy(0, speed);
                     requestAnimationFrame(step);
-                } else {
-                    cancelScroll();
-                }
+                } else { cancelScroll(); }
             }
             scrollAnimationId = requestAnimationFrame(step);
         }
         
         function cancelScroll() {
-            if (scrollAnimationId) {
-                cancelAnimationFrame(scrollAnimationId);
-                scrollAnimationId = null;
-            }
+            if (scrollAnimationId) { cancelAnimationFrame(scrollAnimationId); scrollAnimationId = null; }
             isScrollingActive = false;
         }
         
-        // 更新拖拽时的坐标，并动态滚动
         function updateDragScroll(clientY) {
             currentDragClientY = clientY;
             let speed = calculateScrollSpeed(clientY);
-            if (speed !== 0 && !isScrollingActive) {
-                startSmoothScroll();
-            } else if (speed === 0 && isScrollingActive) {
-                cancelScroll();
-            }
+            if (speed !== 0 && !isScrollingActive) startSmoothScroll();
+            else if (speed === 0 && isScrollingActive) cancelScroll();
         }
         
-        // ----- 核心统一拖拽 (指针事件，完美支持平板) + 强化抓取效果 -----
-        function onPointerDown(e) {
-            const clue = e.currentTarget;
-            if (clue.classList.contains('matched')) return; // 已配对不可拖拽
-            e.preventDefault();     // 防止页面滚动或默认拖拽图片
-            e.stopPropagation();
-            
-            draggedItem = clue;
-            activeClue = clue;
-            isDragging = true;
-            
-            // 🔥 关键：添加拖拽抓取的视觉效果（放大 + 阴影 + 抬高）
-            activeClue.classList.add('clue-dragging');
-            
-            // 记录初始坐标
-            const clientY = e.clientY !== undefined ? e.clientY : (e.touches ? e.touches[0].clientY : 0);
-            currentDragClientY = clientY;
-            
-            // 绑定全局移动和结束
-            window.addEventListener('pointermove', onGlobalPointerMove);
-            window.addEventListener('pointerup', onGlobalPointerUp);
-            // 确保画布捕获指针，防止丢失
-            clue.setPointerCapture(e.pointerId);
-        }
-        
-        // 根据坐标获取下方的气候图元素
+        // 获取当前指针下的气候图
         function getChartFromPoint(clientX, clientY) {
             const elem = document.elementsFromPoint(clientX, clientY);
             for (let el of elem) {
-                if (el.classList && el.classList.contains('chart-item') && !el.classList.contains('matched')) {
-                    return el;
-                }
+                if (el.classList && el.classList.contains('chart-item') && !el.classList.contains('matched')) return el;
             }
             return null;
         }
         
-        // 清除所有高亮
         function clearAllHighlights() {
             document.querySelectorAll('.chart-item').forEach(ch => ch.classList.remove('over'));
+        }
+        
+        // 创建拖拽克隆体 (痕迹)
+        function createDragClone(original) {
+            const rect = original.getBoundingClientRect();
+            const clone = document.createElement('div');
+            clone.className = 'drag-clone';
+            clone.textContent = original.textContent;
+            // 复制边框颜色
+            const borderColor = getComputedStyle(original).borderLeftColor;
+            clone.style.borderLeftColor = borderColor;
+            clone.style.backgroundColor = '#e9f0ff';
+            clone.style.left = rect.left + 'px';
+            clone.style.top = rect.top + 'px';
+            clone.style.width = rect.width + 'px';
+            clone.style.height = rect.height + 'px';
+            document.body.appendChild(clone);
+            return clone;
+        }
+        
+        function updateClonePosition(clone, clientX, clientY) {
+            if (!clone) return;
+            // 偏移一点让克隆体跟随鼠标/手指中心偏下，更自然
+            clone.style.left = (clientX - clone.offsetWidth / 2) + 'px';
+            clone.style.top = (clientY - clone.offsetHeight / 2) + 'px';
+        }
+        
+        function destroyDragClone() {
+            if (dragClone) {
+                dragClone.remove();
+                dragClone = null;
+            }
+        }
+        
+        // ----- 核心拖拽 (指针事件，带克隆痕迹)-----
+        function onPointerDown(e) {
+            const clue = e.currentTarget;
+            if (clue.classList.contains('matched')) return;
+            e.preventDefault();
+            e.stopPropagation();
+            
+            activeClue = clue;
+            isDragging = true;
+            
+            // 为原卡片添加拖拽变淡效果
+            activeClue.classList.add('clue-dragging-original');
+            
+            // 创建浮动克隆体，形成强烈拖拽痕迹
+            dragClone = createDragClone(activeClue);
+            
+            // 初始坐标记录
+            let clientY = e.clientY;
+            if (clientY === undefined && e.touches) clientY = e.touches[0].clientY;
+            currentDragClientY = clientY;
+            if (dragClone) updateClonePosition(dragClone, e.clientX, e.clientY);
+            
+            // 全局监听
+            window.addEventListener('pointermove', onGlobalPointerMove);
+            window.addEventListener('pointerup', onGlobalPointerUp);
+            clue.setPointerCapture(e.pointerId);
         }
         
         function onGlobalPointerMove(e) {
@@ -570,8 +606,11 @@
             if (clientY !== undefined) {
                 updateDragScroll(clientY);
             }
-            
-            // 实时检测目标气候图，并更新高亮
+            // 移动克隆体
+            if (dragClone && clientX !== undefined && clientY !== undefined) {
+                updateClonePosition(dragClone, clientX, clientY);
+            }
+            // 目标高亮
             if (clientX !== undefined && clientY !== undefined) {
                 const target = getChartFromPoint(clientX, clientY);
                 if (target !== currentTargetChart) {
@@ -586,10 +625,12 @@
             if (!isDragging) return;
             e.preventDefault();
             
-            // 🔥 移除抓取视觉效果（释放效果）
+            // 恢复原卡片样式
             if (activeClue) {
-                activeClue.classList.remove('clue-dragging');
+                activeClue.classList.remove('clue-dragging-original');
             }
+            // 销毁克隆体（痕迹消失）
+            destroyDragClone();
             
             let matchedChart = currentTargetChart;
             const success = (matchedChart && activeClue && !activeClue.classList.contains('matched') && !matchedChart.classList.contains('matched'));
@@ -598,7 +639,6 @@
                 const draggedClimate = activeClue.dataset.climate;
                 const targetClimate = matchedChart.dataset.climate;
                 if (draggedClimate === targetClimate) {
-                    // 配对成功
                     matchedChart.classList.add('matched');
                     matchedChart.querySelector('.chart-title').innerText = targetClimate;
                     activeClue.classList.add('matched');
@@ -608,7 +648,7 @@
                         setTimeout(() => showCelebration(), 200);
                     }
                 } else {
-                    // 错误配对: 闪烁红提示并调用AI解释
+                    // 错误效果
                     matchedChart.style.transition = '0.1s';
                     matchedChart.style.borderColor = '#fc8181';
                     matchedChart.style.backgroundColor = '#fff5f5';
@@ -628,24 +668,20 @@
             window.removeEventListener('pointerup', onGlobalPointerUp);
             cancelScroll();
             isDragging = false;
-            draggedItem = null;
             activeClue = null;
             currentTargetChart = null;
             currentDragClientY = 0;
         }
         
-        // 绑定触摸/鼠标拖拽到每个口诀 (替代drag/drop)
         function bindDragEventsToClue(clueElement) {
             clueElement.addEventListener('pointerdown', onPointerDown);
-            // 禁止原生拖拽图片干扰
             clueElement.ondragstart = (e) => { e.preventDefault(); return false; };
         }
         
-        // ------ 原有游戏逻辑保留 ------
+        // ------ 游戏逻辑 (保持不变) ------
         function shuffleArray(arr){ let a=[...arr]; for(let i=a.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
         function updateStatus(){ document.getElementById('matchedCount').innerText=matchedPairs; document.getElementById('totalCount').innerText=climateData.length; }
         
-        // 音频系统
         function initAudioSystem() {
             const bgMusic = document.getElementById('backgroundMusic');
             const celebrationAudio = document.getElementById('celebrationSound');
@@ -665,16 +701,14 @@
         function stopBackgroundMusic() { let m=document.getElementById('backgroundMusic'); m.pause(); m.currentTime=0; }
         function playCelebrationSound() { let s=document.getElementById('celebrationSound'); s.currentTime=0; s.play().catch(e=>console.log); }
         
-        // 计时器
         function startTimer() { if(isTimerRunning) return; isTimerRunning=true; totalSeconds=0; if(timerInterval) clearInterval(timerInterval); document.getElementById('startTimerBtn').disabled=true; document.getElementById('resetTimerBtn').disabled=false; playBackgroundMusic(); timerInterval = setInterval(()=>{ totalSeconds++; updateTimerDisplay(); },1000); updateTimerDisplay(); }
         function stopTimer() { isTimerRunning=false; if(timerInterval){ clearInterval(timerInterval); timerInterval=null; } }
         function resetTimer() { stopTimer(); totalSeconds=0; document.getElementById('startTimerBtn').disabled=false; document.getElementById('resetTimerBtn').disabled=true; updateTimerDisplay(); stopBackgroundMusic(); }
         function updateTimerDisplay() { let m=Math.floor(totalSeconds/60); let s=totalSeconds%60; document.getElementById('minutesDisplay').innerText=m.toString().padStart(2,'0'); document.getElementById('secondsDisplay').innerText=s.toString().padStart(2,'0'); }
         function formatTime(sec){ return `${Math.floor(sec/60).toString().padStart(2,'0')}分${(sec%60).toString().padStart(2,'0')}秒`; }
         
-        // AI调用
         async function callDeepSeek(userMessage, systemPrompt=null) {
-            const defaultSystem = "你是一位地理老师，擅长讲解世界气候类型。回答生动有趣，适合中学生。";
+            const defaultSystem = "你是一位地理老师，擅长讲解世界气候类型。";
             const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
                 method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${DEEPSEEK_API_KEY}`},
                 body:JSON.stringify({ model:'deepseek-chat', messages:[{role:'system', content:systemPrompt||defaultSystem},{role:'user',content:userMessage}], temperature:0.7, max_tokens:500 })
@@ -715,13 +749,11 @@
             }catch(e){}
         }
         
-        // 游戏核心渲染
         function initGame(){
             const cluesList=document.getElementById('cluesList');
             const chartsGrid=document.getElementById('chartsGrid');
             cluesList.innerHTML=''; chartsGrid.innerHTML='';
             matchedPairs=0; updateStatus();
-            // 左侧口诀
             climateData.forEach(climate=>{
                 const clueEl=document.createElement('div');
                 clueEl.className='clue-item'; clueEl.id=`clue-${climate.name}`;
@@ -730,7 +762,6 @@
                 cluesList.appendChild(clueEl);
                 bindDragEventsToClue(clueEl);
             });
-            // 右侧随机排序
             currentClimateOrder=shuffleArray(climateData);
             currentClimateOrder.forEach(climate=>{
                 const chartEl=document.createElement('div'); chartEl.className='chart-item'; chartEl.dataset.climate=climate.name;
