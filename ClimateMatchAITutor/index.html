@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>世界气候类型匹配游戏 · 平板优化版</title>
+    <title>世界气候类型匹配游戏 · 平板触摸强化版</title>
     <style>
         * {
             box-sizing: border-box;
@@ -116,7 +116,7 @@
             border-radius: 10px;
             border-left: 5px solid;
             cursor: grab;
-            transition: 0.2s;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
             font-size: clamp(0.75rem, 2.8vw, 0.9rem);
             line-height: 1.3;
             text-align: center;
@@ -127,17 +127,38 @@
             min-height: 65px;
             touch-action: none;  /* 完全阻止页面滚动拖拽冲突，平板核心优化 */
             will-change: transform;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 🔥 拖拽时的抓取效果强化 (平板/鼠标均生效) */
+        .clue-item.clue-dragging {
+            transform: scale(1.04) translateY(-3px);
+            background: #c3dafe !important;
+            box-shadow: 0 18px 28px -8px rgba(0, 0, 0, 0.3), 0 0 0 2px #4299e1 inset;
+            cursor: grabbing;
+            opacity: 0.95;
+            transition: transform 0.08s linear, box-shadow 0.1s;
+            z-index: 1000;
         }
 
         .clue-item:active { cursor: grabbing; }
         .clue-item:hover { background: #bee3f8; transform: translateY(-2px); }
+        
         .clue-item.matched {
             opacity: 0.5;
             text-decoration: line-through;
-            background: #e6fffa;
+            background: #e6fffa !important;
             cursor: default;
             pointer-events: none;
             touch-action: auto;
+            transform: none;
+            box-shadow: none;
+        }
+        .clue-item.matched.clue-dragging { /* 已配对禁止拖拽，任何拖拽类无效 */
+            transform: none;
+            background: #e6fffa;
+            pointer-events: none;
         }
 
         /* 右侧气候图区 */
@@ -175,6 +196,7 @@
             background: #ebf8ff;
             transform: scale(1.01);
             box-shadow: 0 4px 12px rgba(66,153,225,0.3);
+            transition: all 0.08s linear;
         }
 
         .chart-item.matched {
@@ -323,7 +345,8 @@
                 </div>
             </div>
             <div class="instructions">
-                <strong>✨ 游戏说明：</strong>将左侧气候口诀拖到右侧正确的气候图（随机排序）。<br>
+                <strong>✨ 平板触控强化拖拽：</strong> 用手指按住左侧口诀卡片，卡片会<span style="background:#c3dafe; padding:2px 6px; border-radius:20px;">放大并浮起</span>，拖拽到右侧气候图松开即可配对！边缘自动滚动，反馈超明显。<br>
+                <strong>游戏说明：</strong>将左侧气候口诀拖到右侧正确的气候图（随机排序）。<br>
                 <strong>🤖 AI导师：</strong>配对错误自动弹出解释，右下角可自由提问。
             </div>
         </div>
@@ -332,7 +355,8 @@
             <div class="clues-container">
                 <h2>📜 气候特征口诀</h2>
                 <div class="clue-hint">
-                   🚀 <strong>提示：</strong>口诀中的"______"代表气候类型名称，后面文字代表气候特征。拖动口诀到对应的气候图上完成匹配。<br>
+                    <strong>提示：</strong>手指按住口诀卡片 → 卡片会“浮起”放大，拖拽至对应气候图上方 → 松开手指完成匹配！<br>
+                    🚀 <strong>边缘滚动：</strong>拖拽时靠近屏幕顶部/底部，页面轻柔滚动。
                 </div>
                 <div id="cluesList"></div>
             </div>
@@ -369,7 +393,7 @@
                 <button id="aiCloseBtn" style="background:none; border:none; color:white; font-size:22px; cursor:pointer;">&times;</button>
             </div>
             <div id="aiMessages">
-                <div class="ai-message ai-bot">你好！我是气候 AI 导师。直接拖拽口诀到气候图，靠近屏幕边缘可自动滚动。如有疑问尽管问我～<br><span style="font-size:9px;">🤖 AI生成</span></div>
+                <div class="ai-message ai-bot">你好！我是气候 AI 导师。现在拖拽口诀卡片会有“浮起放大”的抓取效果，配对体验更直观！有疑问尽管问我～<br><span style="font-size:9px;">🤖 AI生成</span></div>
             </div>
             <div class="ai-footer">
                 <input type="text" id="aiInput" placeholder="输入问题...">
@@ -496,7 +520,7 @@
             }
         }
         
-        // ----- 核心统一拖拽 (指针事件，完美支持平板) -----
+        // ----- 核心统一拖拽 (指针事件，完美支持平板) + 强化抓取效果 -----
         function onPointerDown(e) {
             const clue = e.currentTarget;
             if (clue.classList.contains('matched')) return; // 已配对不可拖拽
@@ -506,8 +530,9 @@
             draggedItem = clue;
             activeClue = clue;
             isDragging = true;
-            clue.style.opacity = '0.7';
-            clue.style.cursor = 'grabbing';
+            
+            // 🔥 关键：添加拖拽抓取的视觉效果（放大 + 阴影 + 抬高）
+            activeClue.classList.add('clue-dragging');
             
             // 记录初始坐标
             const clientY = e.clientY !== undefined ? e.clientY : (e.touches ? e.touches[0].clientY : 0);
@@ -563,11 +588,9 @@
             if (!isDragging) return;
             e.preventDefault();
             
-            // 恢复样式
+            // 🔥 移除抓取视觉效果（释放效果）
             if (activeClue) {
-                activeClue.style.opacity = '';
-                activeClue.style.cursor = '';
-                try { activeClue.releasePointerCapture?.(e.pointerId); } catch(ex) {}
+                activeClue.classList.remove('clue-dragging');
             }
             
             let matchedChart = currentTargetChart;
@@ -603,7 +626,6 @@
             
             // 清理拖拽状态
             clearAllHighlights();
-            if (activeClue) activeClue.classList.remove('dragging');
             window.removeEventListener('pointermove', onGlobalPointerMove);
             window.removeEventListener('pointerup', onGlobalPointerUp);
             cancelScroll();
@@ -614,7 +636,7 @@
             currentDragClientY = 0;
         }
         
-        // 绑定鼠标/触摸拖拽到每个口诀 (替代drag/drop)
+        // 绑定触摸/鼠标拖拽到每个口诀 (替代drag/drop)
         function bindDragEventsToClue(clueElement) {
             clueElement.addEventListener('pointerdown', onPointerDown);
             // 禁止原生拖拽图片干扰
