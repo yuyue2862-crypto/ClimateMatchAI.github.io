@@ -2,20 +2,22 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>世界气候类型匹配游戏 · AI导师版（平滑拖拽滚动）</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>世界气候类型匹配游戏 · 平板优化版（顺滑拖拽）</title>
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            user-select: none; /* 避免拖拽时选中文字，提升平板体验 */
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             background: #f0f9ff;
             padding: 1.5rem;
             color: #1a365d;
-            font-family: 'Microsoft YaHei', sans-serif;
+            font-family: 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         .container {
@@ -50,7 +52,6 @@
             font-size: clamp(1.5rem, 5vw, 2.2rem);
         }
 
-        /* 计时器响应式 */
         .timer-container {
             position: absolute;
             top: 0;
@@ -65,55 +66,14 @@
             z-index: 10;
         }
 
-        .timer-title {
-            font-size: 0.8rem;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-
-        .timer-display {
-            font-size: 1.4rem;
-            font-weight: bold;
-            display: flex;
-            justify-content: center;
-            align-items: baseline;
-            gap: 4px;
-        }
-
-        .timer-time {
-            font-size: 1.2rem;
-            min-width: 45px;
-        }
-
-        .timer-label {
-            font-size: 0.7rem;
-        }
-
-        .timer-controls {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 6px;
-        }
-
-        .timer-btn {
-            background: #4299e1;
-            color: white;
-            border: none;
-            padding: 4px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            transition: 0.2s;
-        }
-
-        .timer-btn.start-btn {
-            background: #38a169;
-        }
-
-        .timer-btn.reset-btn {
-            background: #e53e3e;
-        }
+        .timer-title { font-size: 0.8rem; font-weight: bold; margin-bottom: 4px; }
+        .timer-display { font-size: 1.4rem; font-weight: bold; display: flex; justify-content: center; align-items: baseline; gap: 4px; }
+        .timer-time { font-size: 1.2rem; min-width: 45px; }
+        .timer-label { font-size: 0.7rem; }
+        .timer-controls { display: flex; justify-content: center; gap: 8px; margin-top: 6px; }
+        .timer-btn { background: #4299e1; color: white; border: none; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; transition: 0.2s; }
+        .timer-btn.start-btn { background: #38a169; }
+        .timer-btn.reset-btn { background: #e53e3e; }
 
         .instructions {
             background: #edf2f7;
@@ -125,7 +85,7 @@
             line-height: 1.4;
         }
 
-        /* 核心：左右水平 + 弹性缩放 */
+        /* 核心水平布局 */
         .game-area {
             display: flex;
             flex-wrap: nowrap;
@@ -146,19 +106,8 @@
             flex-direction: column;
         }
 
-        .clues-container h2 {
-            font-size: clamp(1rem, 4vw, 1.4rem);
-            margin-bottom: 0.8rem;
-        }
-
-        .clue-hint {
-            background: #fff3cd;
-            padding: 0.7rem;
-            border-radius: 8px;
-            border-left: 4px solid #ffc107;
-            font-size: clamp(0.7rem, 2.5vw, 0.85rem);
-            margin-bottom: 1rem;
-        }
+        .clues-container h2 { font-size: clamp(1rem, 4vw, 1.4rem); margin-bottom: 0.8rem; }
+        .clue-hint { background: #fff3cd; padding: 0.7rem; border-radius: 8px; border-left: 4px solid #ffc107; font-size: clamp(0.7rem, 2.5vw, 0.85rem); margin-bottom: 1rem; }
 
         .clue-item {
             background: #f7fafc;
@@ -166,31 +115,29 @@
             margin: 0.6rem 0;
             border-radius: 10px;
             border-left: 5px solid;
-            cursor: move;
+            cursor: grab;
             transition: 0.2s;
             font-size: clamp(0.75rem, 2.8vw, 0.9rem);
             line-height: 1.3;
             text-align: center;
             word-break: break-word;
-            white-space: normal;
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 65px;
-            -webkit-tap-highlight-color: transparent;
+            touch-action: none;  /* 完全阻止页面滚动拖拽冲突，平板核心优化 */
+            will-change: transform;
         }
 
-        .clue-item:hover {
-            background: #bee3f8;
-            transform: translateY(-2px);
-        }
-
+        .clue-item:active { cursor: grabbing; }
+        .clue-item:hover { background: #bee3f8; transform: translateY(-2px); }
         .clue-item.matched {
             opacity: 0.5;
             text-decoration: line-through;
             background: #e6fffa;
             cursor: default;
             pointer-events: none;
+            touch-action: auto;
         }
 
         /* 右侧气候图区 */
@@ -202,13 +149,8 @@
             padding: 1.2rem;
             box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
         }
+        .charts-container h2 { font-size: clamp(1rem, 4vw, 1.4rem); margin-bottom: 0.8rem; }
 
-        .charts-container h2 {
-            font-size: clamp(1rem, 4vw, 1.4rem);
-            margin-bottom: 0.8rem;
-        }
-
-        /* 自适应网格 */
         .charts-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
@@ -220,17 +162,19 @@
             border: 2px dashed #cbd5e0;
             border-radius: 12px;
             padding: 0.8rem;
-            transition: 0.2s;
+            transition: 0.15s;
             display: flex;
             flex-direction: column;
             align-items: center;
             position: relative;
+            touch-action: pan-y pinch-zoom; /* 不影响拖拽目标检测 */
         }
 
         .chart-item.over {
             border-color: #4299e1;
             background: #ebf8ff;
             transform: scale(1.01);
+            box-shadow: 0 4px 12px rgba(66,153,225,0.3);
         }
 
         .chart-item.matched {
@@ -280,6 +224,7 @@
             opacity: 0;
             transition: opacity 0.5s ease;
             border-radius: 8px;
+            pointer-events: none;
         }
 
         .chart-item.matched .landscape-overlay {
@@ -296,12 +241,7 @@
             font-size: clamp(1rem, 4vw, 1.2rem);
             font-weight: bold;
         }
-
-        .controls {
-            text-align: center;
-            margin: 1.5rem 0;
-        }
-
+        .controls { text-align: center; margin: 1.5rem 0; }
         #resetBtn {
             background: linear-gradient(to right, #4299e1, #2b6cb0);
             color: white;
@@ -315,118 +255,22 @@
         }
 
         /* AI 助手样式 */
-        #aiAssistant {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
-        }
-        #aiToggleBtn {
-            background: #2c5282;
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
-            color: white;
-            font-size: 26px;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: none;
-        }
-        #aiPanel {
-            display: none;
-            position: absolute;
-            bottom: 70px;
-            right: 0;
-            width: 350px;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-            border: 1px solid #cbd5e0;
-            flex-direction: column;
-        }
-        .ai-header {
-            background: #2c5282;
-            color: white;
-            padding: 10px 14px;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: grab;
-            border-radius: 20px 20px 0 0;
-        }
+        #aiAssistant { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
+        #aiToggleBtn { background: #2c5282; width: 55px; height: 55px; border-radius: 50%; color: white; font-size: 26px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; border: none; }
+        #aiPanel { display: none; position: absolute; bottom: 70px; right: 0; width: 350px; background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.25); border: 1px solid #cbd5e0; flex-direction: column; }
+        .ai-header { background: #2c5282; color: white; padding: 10px 14px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; cursor: grab; border-radius: 20px 20px 0 0; }
         .ai-header:active { cursor: grabbing; }
-        #aiMessages {
-            height: 300px;
-            overflow-y: auto;
-            padding: 10px;
-            background: #f7fafc;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .ai-message {
-            max-width: 85%;
-            padding: 6px 12px;
-            border-radius: 18px;
-            font-size: 13px;
-            line-height: 1.4;
-            word-break: break-word;
-        }
+        #aiMessages { height: 300px; overflow-y: auto; padding: 10px; background: #f7fafc; display: flex; flex-direction: column; gap: 8px; }
+        .ai-message { max-width: 85%; padding: 6px 12px; border-radius: 18px; font-size: 13px; line-height: 1.4; word-break: break-word; }
         .ai-user { align-self: flex-end; background: #2c5282; color: white; }
         .ai-bot { align-self: flex-start; background: #e2e8f0; color: #1a202c; }
-        .ai-footer {
-            padding: 10px;
-            border-top: 1px solid #e2e8f0;
-            display: flex;
-            background: white;
-            border-radius: 0 0 20px 20px;
-        }
-        #aiInput {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid #cbd5e0;
-            border-radius: 30px;
-            outline: none;
-            font-size: 13px;
-        }
-        #aiSendBtn {
-            margin-left: 8px;
-            background: #2c5282;
-            border: none;
-            color: white;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-        }
+        .ai-footer { padding: 10px; border-top: 1px solid #e2e8f0; display: flex; background: white; border-radius: 0 0 20px 20px; }
+        #aiInput { flex: 1; padding: 8px; border: 1px solid #cbd5e0; border-radius: 30px; outline: none; font-size: 13px; }
+        #aiSendBtn { margin-left: 8px; background: #2c5282; border: none; color: white; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; }
 
         /* 祝贺弹窗 */
-        .celebration-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        }
-        .celebration-modal {
-            background: white;
-            border-radius: 20px;
-            padding: 1.5rem;
-            max-width: 90%;
-            width: 700px;
-            max-height: 90vh;
-            overflow-y: auto;
-            text-align: center;
-        }
+        .celebration-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; }
+        .celebration-modal { background: white; border-radius: 20px; padding: 1.5rem; max-width: 90%; width: 700px; max-height: 90vh; overflow-y: auto; text-align: center; }
         .celebration-title { font-size: clamp(1.5rem, 5vw, 2rem); margin-bottom: 0.8rem; }
         .completion-time { font-size: 1.2rem; background: #f0fff4; display: inline-block; padding: 6px 18px; border-radius: 40px; margin: 1rem 0; }
         .complete-clues { text-align: left; max-height: 300px; overflow-y: auto; margin: 1rem 0; }
@@ -439,7 +283,6 @@
             100% { transform: translateY(1000px) rotate(360deg); opacity: 0; }
         }
 
-        /* 小屏适配保持水平 */
         @media (max-width: 780px) {
             body { padding: 0.8rem; }
             .game-area { gap: 0.8rem; }
@@ -480,19 +323,18 @@
                 </div>
             </div>
             <div class="instructions">
-                <strong>✨ 智能平滑滚动：</strong> 拖动口诀时，手指/鼠标移到屏幕边缘，页面会轻柔滚动，轻松配对远处的气候图！<br>
-                <strong>游戏说明：</strong>将左侧口诀拖到右侧对应的气候图上。右侧气候图每次随机排序，挑战你的知识！<br>
-                <strong>🤖 AI导师：</strong>配对错误自动弹出解释，也可点击右下角自由提问。
+                <strong>✨ 平板顺滑拖拽：</strong> 用手指按住左边口诀，直接拖拽到右侧对应气候图上松开即可配对。靠近屏幕上下边缘页面会自动平滑滚动，配对超顺手！<br>
+                <strong>游戏说明：</strong>将左侧气候口诀拖到右侧正确的气候图（随机排序）。<br>
+                <strong>🤖 AI导师：</strong>配对错误自动弹出解释，右下角可自由提问。
             </div>
         </div>
 
-        <!-- 游戏区：始终水平排列 -->
         <div class="game-area">
             <div class="clues-container">
                 <h2>📜 气候特征口诀</h2>
                 <div class="clue-hint">
-                    <strong>提示：</strong>口诀中的"______"代表气候类型名称，拖动口诀到对应气候图完成匹配。<br>
-                    🚀 <strong>边缘滚动：</strong>拖拽时靠近屏幕顶部/底部，页面会以缓慢柔和的速度滚动。
+                    <strong>提示：</strong>手指按住口诀，拖拽到右侧对应的气候图上方，松开即配对！<br>
+                    🚀 <strong>边缘滚动：</strong>拖拽时靠近屏幕顶部/底部，页面轻柔滚动。
                 </div>
                 <div id="cluesList"></div>
             </div>
@@ -529,7 +371,7 @@
                 <button id="aiCloseBtn" style="background:none; border:none; color:white; font-size:22px; cursor:pointer;">&times;</button>
             </div>
             <div id="aiMessages">
-                <div class="ai-message ai-bot">你好！我是气候 AI 导师。拖拽口诀时，靠近屏幕边缘会自动慢速滚动，方便配对。有问题尽管问我～<br><span style="font-size:9px;">🤖 AI生成</span></div>
+                <div class="ai-message ai-bot">你好！我是气候 AI 导师。直接拖拽口诀到气候图，靠近屏幕边缘可自动滚动。如有疑问尽管问我～<br><span style="font-size:9px;">🤖 AI生成</span></div>
             </div>
             <div class="ai-footer">
                 <input type="text" id="aiInput" placeholder="输入问题...">
@@ -542,14 +384,15 @@
     <audio id="celebrationSound" preload="auto"></audio>
 
     <script>
-        // ===================== API Key =====================
-        const DEEPSEEK_API_KEY = 'sk-600e078d6f2147e384a15f217d654f2c';   // 请替换成你自己的Key
-
+        // ===================== 配置 =====================
+        const DEEPSEEK_API_KEY = 'sk-600e078d6f2147e384a15f217d654f2c';
         const musicConfig = {
             backgroundMusic: { file: "background.mp3", type: "audio/mpeg", volume: 0.4, loop: true },
             celebrationSound: { file: "celebration.mp3", type: "audio/mpeg", volume: 0.7 }
         };
         const AUDIO_FOLDER = "audio/";
+        const IMAGE_FOLDER = "climate_images/";
+        const LANDSCAPE_FOLDER = "landscape_images/";
 
         const completeClues = [
             { name: "热带雨林气候", clue: "热带雨林雨不休，柱状满格如瀑流!", shortName: "热带雨林", color: "#059669" },
@@ -578,10 +421,8 @@
             { name: "高原山地气候", clue: "_____垂直变，气温随高度递减!", imageFile: "高原山地气候-拉萨.jpg", landscapeFile: "高原山地景观.jpg", color: "#065F46" },
             { name: "极地气候", clue: "_____风雪狂，冰封千里白茫茫!", imageFile: "极地气候-东方站.jpg", landscapeFile: "极地景观.jpg", color: "#2D3748" }
         ];
-        const IMAGE_FOLDER = "climate_images/";
-        const LANDSCAPE_FOLDER = "landscape_images/";
 
-        let draggedItem = null;
+        let draggedItem = null;          // 当前拖拽的口诀DOM
         let matchedPairs = 0;
         let currentClimateOrder = [];
         let timerInterval = null;
@@ -589,73 +430,53 @@
         let isTimerRunning = false;
         let scrollAnimationId = null;
         let isScrollingActive = false;
-
-        // ---------- 平滑自动滚动（速度大幅降低，使用 requestAnimationFrame）----------
-        function startSmoothScrollOnDrag(clientY) {
-            if (!draggedItem) return;
-            const edgeThreshold = 80;      // 距离边缘80px开始触发（稍宽，避免过于灵敏）
-            const baseSpeed = 2.5;          // 基础滚动速度（像素/帧），非常慢且平滑
-            const maxSpeed = 5;              // 最大速度限制
+        let currentDragClientY = 0;
+        
+        // 全局拖拽状态 (指针统一)
+        let isDragging = false;
+        let activeClue = null;
+        let currentTargetChart = null;
+        
+        // 自动滚动边缘阈值 & 速度参数
+        const EDGE_THRESHOLD = 85;
+        const BASE_SPEED = 2.2;
+        const MAX_SPEED = 4.8;
+        
+        // ---------- 平滑自动滚动 (优化版) ----------
+        function calculateScrollSpeed(clientY) {
+            if (!clientY) return 0;
             const viewportHeight = window.innerHeight;
-            
-            // 计算滚动速度：离边缘越近速度越快，但限制最大速度
-            let speed = 0;
-            if (clientY < edgeThreshold) {
-                // 向上滚动：距离边缘越近，速度越大
-                let distance = edgeThreshold - clientY;
-                speed = -Math.min(maxSpeed, baseSpeed + distance / 20);
-            } else if (clientY > viewportHeight - edgeThreshold) {
-                let distance = clientY - (viewportHeight - edgeThreshold);
-                speed = Math.min(maxSpeed, baseSpeed + distance / 20);
+            if (clientY < EDGE_THRESHOLD) {
+                let distance = EDGE_THRESHOLD - clientY;
+                let speed = -Math.min(MAX_SPEED, BASE_SPEED + distance / 22);
+                return speed;
+            } else if (clientY > viewportHeight - EDGE_THRESHOLD) {
+                let distance = clientY - (viewportHeight - EDGE_THRESHOLD);
+                let speed = Math.min(MAX_SPEED, BASE_SPEED + distance / 22);
+                return speed;
             }
+            return 0;
+        }
+        
+        function startSmoothScroll() {
+            if (!isDragging) return;
+            if (scrollAnimationId) cancelAnimationFrame(scrollAnimationId);
+            isScrollingActive = true;
             
-            if (speed !== 0 && !isScrollingActive) {
-                isScrollingActive = true;
-                function step() {
-                    if (!draggedItem) {
-                        cancelScroll();
-                        return;
-                    }
-                    if (speed !== 0) {
-                        window.scrollBy(0, speed);
-                        // 继续检测当前鼠标/触摸位置（需要从全局获取最新位置）
-                        // 为了保持连续滚动，我们根据上次的速度继续，但需要实时更新速度
-                        // 这里简化：通过全局最后一次鼠标坐标来更新速度
-                        if (window._lastDragClientY !== undefined) {
-                            const newSpeed = calculateSpeed(window._lastDragClientY);
-                            speed = newSpeed;
-                        }
-                        if (speed !== 0) {
-                            scrollAnimationId = requestAnimationFrame(step);
-                        } else {
-                            cancelScroll();
-                        }
-                    } else {
-                        cancelScroll();
-                    }
+            function step() {
+                if (!isDragging) {
+                    cancelScroll();
+                    return;
                 }
-                function calculateSpeed(currentY) {
-                    if (!currentY) return 0;
-                    if (currentY < edgeThreshold) {
-                        let distance = edgeThreshold - currentY;
-                        return -Math.min(maxSpeed, baseSpeed + distance / 20);
-                    } else if (currentY > viewportHeight - edgeThreshold) {
-                        let distance = currentY - (viewportHeight - edgeThreshold);
-                        return Math.min(maxSpeed, baseSpeed + distance / 20);
-                    }
-                    return 0;
+                let speed = calculateScrollSpeed(currentDragClientY);
+                if (speed !== 0) {
+                    window.scrollBy(0, speed);
+                    requestAnimationFrame(step);
+                } else {
+                    cancelScroll();
                 }
-                // 存储速度更新函数
-                window._updateScrollSpeed = function(y) {
-                    if (scrollAnimationId && draggedItem) {
-                        speed = calculateSpeed(y);
-                        if (speed === 0) cancelScroll();
-                    }
-                };
-                scrollAnimationId = requestAnimationFrame(step);
-            } else if (speed === 0 && isScrollingActive) {
-                cancelScroll();
             }
+            scrollAnimationId = requestAnimationFrame(step);
         }
         
         function cancelScroll() {
@@ -664,40 +485,149 @@
                 scrollAnimationId = null;
             }
             isScrollingActive = false;
-            window._updateScrollSpeed = null;
         }
         
-        // 全局记录拖拽时的鼠标/触摸位置
-        function onDragMove(e) {
-            if (!draggedItem) return;
-            let clientY = e.clientY;
-            if (clientY === undefined && e.touches) {
+        // 更新拖拽时的坐标，并动态滚动
+        function updateDragScroll(clientY) {
+            currentDragClientY = clientY;
+            let speed = calculateScrollSpeed(clientY);
+            if (speed !== 0 && !isScrollingActive) {
+                startSmoothScroll();
+            } else if (speed === 0 && isScrollingActive) {
+                cancelScroll();
+            }
+        }
+        
+        // ----- 核心统一拖拽 (指针事件，完美支持平板) -----
+        function onPointerDown(e) {
+            const clue = e.currentTarget;
+            if (clue.classList.contains('matched')) return; // 已配对不可拖拽
+            e.preventDefault();     // 防止页面滚动或默认拖拽图片
+            e.stopPropagation();
+            
+            draggedItem = clue;
+            activeClue = clue;
+            isDragging = true;
+            clue.style.opacity = '0.7';
+            clue.style.cursor = 'grabbing';
+            
+            // 记录初始坐标
+            const clientY = e.clientY !== undefined ? e.clientY : (e.touches ? e.touches[0].clientY : 0);
+            currentDragClientY = clientY;
+            
+            // 绑定全局移动和结束
+            window.addEventListener('pointermove', onGlobalPointerMove);
+            window.addEventListener('pointerup', onGlobalPointerUp);
+            // 确保画布捕获指针，防止丢失
+            clue.setPointerCapture(e.pointerId);
+        }
+        
+        // 根据坐标获取下方的气候图元素
+        function getChartFromPoint(clientX, clientY) {
+            const elem = document.elementsFromPoint(clientX, clientY);
+            for (let el of elem) {
+                if (el.classList && el.classList.contains('chart-item') && !el.classList.contains('matched')) {
+                    return el;
+                }
+            }
+            return null;
+        }
+        
+        // 清除所有高亮
+        function clearAllHighlights() {
+            document.querySelectorAll('.chart-item').forEach(ch => ch.classList.remove('over'));
+        }
+        
+        function onGlobalPointerMove(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            let clientX = e.clientX, clientY = e.clientY;
+            if (clientX === undefined && e.touches) {
+                clientX = e.touches[0].clientX;
                 clientY = e.touches[0].clientY;
             }
             if (clientY !== undefined) {
-                window._lastDragClientY = clientY;
-                if (window._updateScrollSpeed) window._updateScrollSpeed(clientY);
-                else startSmoothScrollOnDrag(clientY);
+                updateDragScroll(clientY);
+            }
+            
+            // 实时检测目标气候图，并更新高亮
+            if (clientX !== undefined && clientY !== undefined) {
+                const target = getChartFromPoint(clientX, clientY);
+                if (target !== currentTargetChart) {
+                    clearAllHighlights();
+                    if (target) target.classList.add('over');
+                    currentTargetChart = target;
+                }
             }
         }
         
-        function stopGlobalDragScroll() {
+        async function onGlobalPointerUp(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            
+            // 恢复样式
+            if (activeClue) {
+                activeClue.style.opacity = '';
+                activeClue.style.cursor = '';
+                try { activeClue.releasePointerCapture?.(e.pointerId); } catch(ex) {}
+            }
+            
+            let matchedChart = currentTargetChart;
+            const success = (matchedChart && activeClue && !activeClue.classList.contains('matched') && !matchedChart.classList.contains('matched'));
+            
+            if (success) {
+                const draggedClimate = activeClue.dataset.climate;
+                const targetClimate = matchedChart.dataset.climate;
+                if (draggedClimate === targetClimate) {
+                    // 配对成功
+                    matchedChart.classList.add('matched');
+                    matchedChart.querySelector('.chart-title').innerText = targetClimate;
+                    activeClue.classList.add('matched');
+                    matchedPairs++;
+                    updateStatus();
+                    if (matchedPairs === climateData.length) {
+                        setTimeout(() => showCelebration(), 200);
+                    }
+                } else {
+                    // 错误配对: 闪烁红提示并调用AI解释
+                    matchedChart.style.transition = '0.1s';
+                    matchedChart.style.borderColor = '#fc8181';
+                    matchedChart.style.backgroundColor = '#fff5f5';
+                    setTimeout(() => {
+                        if (matchedChart) {
+                            matchedChart.style.borderColor = '';
+                            matchedChart.style.backgroundColor = '';
+                        }
+                    }, 500);
+                    await aiExplainMistake(draggedClimate, targetClimate);
+                }
+            }
+            
+            // 清理拖拽状态
+            clearAllHighlights();
+            if (activeClue) activeClue.classList.remove('dragging');
+            window.removeEventListener('pointermove', onGlobalPointerMove);
+            window.removeEventListener('pointerup', onGlobalPointerUp);
             cancelScroll();
-            window._lastDragClientY = null;
-            window.removeEventListener('dragover', onDragMove);
-            window.removeEventListener('touchmove', onDragMove);
-            window.removeEventListener('dragend', stopGlobalDragScroll);
-            window.removeEventListener('touchend', stopGlobalDragScroll);
+            isDragging = false;
+            draggedItem = null;
+            activeClue = null;
+            currentTargetChart = null;
+            currentDragClientY = 0;
         }
         
-        function initAutoScroll() {
-            window.addEventListener('dragover', onDragMove);
-            window.addEventListener('touchmove', onDragMove, { passive: false });
-            window.addEventListener('dragend', stopGlobalDragScroll);
-            window.addEventListener('touchend', stopGlobalDragScroll);
+        // 绑定鼠标/触摸拖拽到每个口诀 (替代drag/drop)
+        function bindDragEventsToClue(clueElement) {
+            clueElement.addEventListener('pointerdown', onPointerDown);
+            // 禁止原生拖拽图片干扰
+            clueElement.ondragstart = (e) => { e.preventDefault(); return false; };
         }
-
-        // ---------- 音频系统 ----------
+        
+        // ------ 原有游戏逻辑保留 ------
+        function shuffleArray(arr){ let a=[...arr]; for(let i=a.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+        function updateStatus(){ document.getElementById('matchedCount').innerText=matchedPairs; document.getElementById('totalCount').innerText=climateData.length; }
+        
+        // 音频系统
         function initAudioSystem() {
             const bgMusic = document.getElementById('backgroundMusic');
             const celebrationAudio = document.getElementById('celebrationSound');
@@ -716,24 +646,15 @@
         function playBackgroundMusic() { document.getElementById('backgroundMusic').play().catch(e=>console.log); }
         function stopBackgroundMusic() { let m=document.getElementById('backgroundMusic'); m.pause(); m.currentTime=0; }
         function playCelebrationSound() { let s=document.getElementById('celebrationSound'); s.currentTime=0; s.play().catch(e=>console.log); }
-
+        
         // 计时器
-        function startTimer() {
-            if(isTimerRunning) return;
-            isTimerRunning=true; totalSeconds=0;
-            if(timerInterval) clearInterval(timerInterval);
-            document.getElementById('startTimerBtn').disabled=true;
-            document.getElementById('resetTimerBtn').disabled=false;
-            playBackgroundMusic();
-            timerInterval = setInterval(()=>{ totalSeconds++; updateTimerDisplay(); },1000);
-            updateTimerDisplay();
-        }
+        function startTimer() { if(isTimerRunning) return; isTimerRunning=true; totalSeconds=0; if(timerInterval) clearInterval(timerInterval); document.getElementById('startTimerBtn').disabled=true; document.getElementById('resetTimerBtn').disabled=false; playBackgroundMusic(); timerInterval = setInterval(()=>{ totalSeconds++; updateTimerDisplay(); },1000); updateTimerDisplay(); }
         function stopTimer() { isTimerRunning=false; if(timerInterval){ clearInterval(timerInterval); timerInterval=null; } }
         function resetTimer() { stopTimer(); totalSeconds=0; document.getElementById('startTimerBtn').disabled=false; document.getElementById('resetTimerBtn').disabled=true; updateTimerDisplay(); stopBackgroundMusic(); }
         function updateTimerDisplay() { let m=Math.floor(totalSeconds/60); let s=totalSeconds%60; document.getElementById('minutesDisplay').innerText=m.toString().padStart(2,'0'); document.getElementById('secondsDisplay').innerText=s.toString().padStart(2,'0'); }
         function formatTime(sec){ return `${Math.floor(sec/60).toString().padStart(2,'0')}分${(sec%60).toString().padStart(2,'0')}秒`; }
-
-        // AI 调用
+        
+        // AI调用
         async function callDeepSeek(userMessage, systemPrompt=null) {
             const defaultSystem = "你是一位地理老师，擅长讲解世界气候类型。回答生动有趣，适合中学生。";
             const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
@@ -744,7 +665,7 @@
             const data = await response.json();
             return data.choices[0].message.content;
         }
-
+        
         let isPanelOpen=false;
         function openPanel() { document.getElementById('aiPanel').style.display='flex'; isPanelOpen=true; }
         function closePanel() { document.getElementById('aiPanel').style.display='none'; isPanelOpen=false; }
@@ -756,8 +677,8 @@
             container.appendChild(div);
             container.scrollTop=container.scrollHeight;
         }
-        async function sendToAIAndReply(userMessage,autoOpen=true){
-            if(autoOpen && !isPanelOpen) openPanel();
+        async function sendToAIAndReply(userMessage){
+            if(!isPanelOpen) openPanel();
             addAIMessage(userMessage,true);
             const loadingDiv=document.createElement('div'); loadingDiv.className='ai-message ai-bot'; loadingDiv.innerText='正在思考...';
             document.getElementById('aiMessages').appendChild(loadingDiv);
@@ -769,58 +690,14 @@
         }
         async function aiExplainMistake(wrongClimate,correctClimate){
             try{
-                const prompt=`学生错误地将“${wrongClimate}”的口诀拖到了“${correctClimate}”的气候图上。请用简短鼓励的话解释区别，30字内。`;
+                const prompt=`学生错误地将“${wrongClimate}”的口诀拖到了“${correctClimate}”的气候图上。请用简短鼓励的话解释区别，40字内。`;
                 const reply=await callDeepSeek(prompt,"你是一位耐心的地理老师，简短对比气候类型。");
                 if(!isPanelOpen) openPanel();
                 addAIMessage(`🔍 小提示：${reply}`,false);
             }catch(e){}
         }
-
-        // 游戏核心逻辑
-        function shuffleArray(arr){ let a=[...arr]; for(let i=a.length-1;i>0;i--){ let j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
-        function updateStatus(){ document.getElementById('matchedCount').innerText=matchedPairs; document.getElementById('totalCount').innerText=climateData.length; }
-
-        function handleDragStart(e){
-            draggedItem = this;
-            this.classList.add('dragging');
-            if (e.dataTransfer) {
-                e.dataTransfer.setData('text/plain', this.dataset.climate);
-                e.dataTransfer.effectAllowed = 'move';
-            }
-            // 记录初始触摸位置（用于touch拖拽）
-            if (e.touches) {
-                window._lastDragClientY = e.touches[0].clientY;
-            } else {
-                window._lastDragClientY = e.clientY;
-            }
-            initAutoScroll();
-        }
-        function handleDragEnd(){
-            this.classList.remove('dragging');
-            draggedItem = null;
-            stopGlobalDragScroll();
-        }
-        function handleDrop(e){
-            e.preventDefault();
-            this.classList.remove('over');
-            if(!draggedItem) return;
-            const draggedClimate = draggedItem.dataset.climate;
-            const targetClimate = this.dataset.climate;
-            if(draggedClimate === targetClimate){
-                this.querySelector('.chart-title').innerText = targetClimate;
-                this.classList.add('matched');
-                draggedItem.classList.add('matched');
-                draggedItem.style.pointerEvents = 'none';
-                matchedPairs++;
-                updateStatus();
-                if(matchedPairs === climateData.length) setTimeout(()=>showCelebration(),300);
-            }else{
-                this.style.borderColor='#fc8181'; this.style.backgroundColor='#fff5f5';
-                setTimeout(()=>{ this.style.borderColor=''; this.style.backgroundColor=''; },500);
-                aiExplainMistake(draggedClimate, targetClimate);
-            }
-        }
-
+        
+        // 游戏核心渲染
         function initGame(){
             const cluesList=document.getElementById('cluesList');
             const chartsGrid=document.getElementById('chartsGrid');
@@ -830,20 +707,10 @@
             climateData.forEach(climate=>{
                 const clueEl=document.createElement('div');
                 clueEl.className='clue-item'; clueEl.id=`clue-${climate.name}`;
-                clueEl.textContent=climate.clue; clueEl.draggable=true;
+                clueEl.textContent=climate.clue;
                 clueEl.dataset.climate=climate.name; clueEl.style.borderLeftColor=climate.color;
-                clueEl.addEventListener('dragstart',handleDragStart); clueEl.addEventListener('dragend',handleDragEnd);
-                // 支持触摸屏拖拽 (touch)
-                clueEl.addEventListener('touchstart', (e) => { 
-                    e.preventDefault();
-                    // 简单模拟drag开始
-                    draggedItem = clueEl;
-                    clueEl.classList.add('dragging');
-                    if (e.touches) window._lastDragClientY = e.touches[0].clientY;
-                    initAutoScroll();
-                });
-                clueEl.addEventListener('touchend', () => { if(draggedItem === clueEl) handleDragEnd.call(clueEl); });
                 cluesList.appendChild(clueEl);
+                bindDragEventsToClue(clueEl);
             });
             // 右侧随机排序
             currentClimateOrder=shuffleArray(climateData);
@@ -855,25 +722,12 @@
                 imgEl.onerror=function(){ this.style.display='none'; const err=document.createElement('div'); err.innerText='❌图片缺失'; err.style.fontSize='12px'; imgContainer.appendChild(err); };
                 const landscapeImg=document.createElement('img'); landscapeImg.className='landscape-overlay'; landscapeImg.src=LANDSCAPE_FOLDER+climate.landscapeFile;
                 imgContainer.appendChild(imgEl); imgContainer.appendChild(landscapeImg);
-                chartEl.addEventListener('dragover',e=>e.preventDefault());
-                chartEl.addEventListener('dragenter',()=>chartEl.classList.add('over'));
-                chartEl.addEventListener('dragleave',()=>chartEl.classList.remove('over'));
-                chartEl.addEventListener('drop',handleDrop);
-                // 触摸屏上的drop模拟
-                chartEl.addEventListener('touchmove', (e) => { e.preventDefault(); if(draggedItem) chartEl.classList.add('over'); });
-                chartEl.addEventListener('touchend', (e) => { 
-                    if(draggedItem) { 
-                        const fakeEvent = { preventDefault: ()=>{} };
-                        handleDrop.call(chartEl, fakeEvent);
-                        chartEl.classList.remove('over');
-                    }
-                });
                 chartEl.appendChild(titleEl); chartEl.appendChild(imgContainer);
                 chartsGrid.appendChild(chartEl);
             });
             resetTimer();
         }
-
+        
         async function showCelebration(){
             playCelebrationSound(); stopTimer(); stopBackgroundMusic();
             document.getElementById('finalTime').innerText=formatTime(totalSeconds);
@@ -882,7 +736,7 @@
             completeClues.forEach(item=>{
                 const namePart=item.shortName||item.name.slice(0,4);
                 const rest=item.clue.substring(namePart.length);
-                const div=document.createElement('div'); div.className='complete-clue-item'; div.style.borderLeftColor=item.color; div.style.backgroundColor=`${item.color}10`;
+                const div=document.createElement('div'); div.style.borderLeftColor=item.color; div.style.backgroundColor=`${item.color}10`; div.style.padding='5px'; div.style.margin='4px 0'; div.style.borderLeft='4px solid';
                 div.innerHTML=`<span style="font-weight:bold;color:${item.color}">${namePart}</span>${rest}`;
                 completeContainer.appendChild(div);
             });
@@ -894,11 +748,10 @@
             document.getElementById('celebrationOverlay').style.display='flex';
             for(let i=0;i<60;i++){ let c=document.createElement('div'); c.style.position='fixed'; c.style.width='8px'; c.style.height='8px'; c.style.backgroundColor=['#059669','#D97706','#DC2626','#2563EB'][Math.floor(Math.random()*4)]; c.style.borderRadius='50%'; c.style.left=Math.random()*100+'vw'; c.style.top='-10px'; c.style.animation=`confetti ${Math.random()*2+2}s linear forwards`; document.body.appendChild(c); setTimeout(()=>c.remove(),4000); }
         }
-
-        // UI初始化
+        
         function initUI(){
-            document.getElementById('aiToggleBtn').onclick=()=>togglePanel();
-            document.getElementById('aiCloseBtn').onclick=()=>closePanel();
+            document.getElementById('aiToggleBtn').onclick=()=>{ if(isPanelOpen) closePanel(); else openPanel(); };
+            document.getElementById('aiCloseBtn').onclick=closePanel;
             document.getElementById('aiSendBtn').onclick=()=>{ let msg=document.getElementById('aiInput').value.trim(); if(msg){ sendToAIAndReply(msg); document.getElementById('aiInput').value=''; } };
             document.getElementById('aiInput').onkeypress=e=>{ if(e.key==='Enter') document.getElementById('aiSendBtn').click(); };
             closePanel();
@@ -908,9 +761,8 @@
             window.addEventListener('mousemove',(e)=>{ if(!dragActive) return; const a=document.getElementById('aiAssistant'); let newLeft=startLeft+(e.clientX-startX); let newTop=startTop+(e.clientY-startY); newLeft=Math.min(Math.max(0,newLeft), window.innerWidth-a.offsetWidth); newTop=Math.min(Math.max(0,newTop), window.innerHeight-a.offsetHeight); a.style.left=newLeft+'px'; a.style.top=newTop+'px'; });
             window.addEventListener('mouseup',()=>{ if(dragActive){ document.getElementById('aiAssistant').classList.remove('dragging'); dragActive=false; } });
         }
-        function togglePanel(){ isPanelOpen?closePanel():openPanel(); }
-
-        document.getElementById('resetBtn').addEventListener('click',initGame);
+        
+        document.getElementById('resetBtn').addEventListener('click',()=>{ if(isDragging) return; initGame(); });
         document.getElementById('playAgainBtn').addEventListener('click',()=>{ document.getElementById('celebrationOverlay').style.display='none'; initGame(); });
         document.getElementById('closeModalBtn').addEventListener('click',()=>{ document.getElementById('celebrationOverlay').style.display='none'; });
         document.getElementById('audioStarter').addEventListener('click',function(){ playBackgroundMusic(); this.style.display='none'; });
